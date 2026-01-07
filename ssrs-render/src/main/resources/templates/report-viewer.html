@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>SSRS Report</title>
+    <style>
+        * { margin: 0; padding: 0; }
+        body { overflow: hidden; font-family: Arial, sans-serif; background: #f5f5f5; }
+        .header {
+            background: #667eea;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h2 { font-size: 18px; }
+        .btn-back {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .btn-back:hover { background: #f0f0f0; }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 60px);
+            font-size: 18px;
+            color: #666;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        iframe {
+            width: 100%;
+            height: calc(100vh - 60px);
+            border: none;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2 th:text="'📊 ' + ${reportPath}"></h2>
+        <a href="/reports" class="btn-back">← Back to Home</a>
+    </div>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <span>Loading report...</span>
+    </div>
+    <iframe id="reportFrame" style="display:none;"></iframe>
+
+    <script th:inline="javascript">
+        const reportPath = /*[[${reportPath}]]*/ '';
+        const params = /*[[${params}]]*/ {};
+        
+        window.onload = function() {
+            let url = '/reports/proxy?reportPath=' + encodeURIComponent(reportPath);
+            
+            // Add parameters
+            for (let key in params) {
+                if (key !== 'reportPath') {
+                    url += '&' + key + '=' + encodeURIComponent(params[key]);
+                }
+            }
+            
+            const iframe = document.getElementById('reportFrame');
+            const loading = document.getElementById('loading');
+            
+            iframe.onload = function() {
+                loading.style.display = 'none';
+                iframe.style.display = 'block';
+            };
+            
+            iframe.src = url;
+            
+            // Timeout fallback
+            setTimeout(function() {
+                if (loading.style.display !== 'none') {
+                    loading.innerHTML = '<div style="text-align:center;"><h3>Report is taking longer than expected...</h3><p>The report is still loading. Please wait.</p></div>';
+                }
+            }, 5000);
+        };
+    </script>
+</body>
+</html>

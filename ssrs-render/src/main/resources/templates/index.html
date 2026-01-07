@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>SSRS Report Viewer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-view {
+            background: #667eea;
+            color: white;
+        }
+        .btn-view:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-download {
+            background: #48bb78;
+            color: white;
+        }
+        .btn-download:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+        }
+        .info-box {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .info-box strong {
+            color: #667eea;
+        }
+        .error {
+            background: #fed7d7;
+            border-left-color: #f56565;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .example {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 SSRS Report Viewer</h1>
+        <p class="subtitle">Enter report details to view or download</p>
+        
+        <div th:if="${error}" class="error" th:text="${error}"></div>
+        
+        <form id="reportForm">
+            <div class="form-group">
+                <label for="reportPath">Report Path *</label>
+                <input type="text" id="reportPath" name="reportPath" 
+                       placeholder="/FolderName/ReportName" required>
+                <div class="example">Example: /Sales/SalesReport or /HR/EmployeeReport</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="format">Export Format</label>
+                <select id="format" name="format">
+                    <option value="PDF">PDF</option>
+                    <option value="EXCEL">Excel</option>
+                    <option value="WORD">Word</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="parameters">Parameters (Optional)</label>
+                <input type="text" id="parameters" name="parameters" 
+                       placeholder="StartDate=2024-01-01&EndDate=2024-12-31">
+                <div class="example">Format: param1=value1&param2=value2</div>
+            </div>
+            
+            <div class="btn-group">
+                <button type="button" class="btn-view" onclick="viewReport()">
+                    👁️ View Report
+                </button>
+                <button type="button" class="btn-download" onclick="downloadReport()">
+                    ⬇️ Download
+                </button>
+            </div>
+        </form>
+        
+        <div class="info-box">
+            <strong>SSRS Server:</strong><br>
+            <span th:text="${baseUrl}"></span>
+        </div>
+    </div>
+
+    <script>
+        function getFormData() {
+            const reportPath = document.getElementById('reportPath').value.trim();
+            const parameters = document.getElementById('parameters').value.trim();
+            const format = document.getElementById('format').value;
+            
+            if (!reportPath) {
+                alert('Please enter a report path');
+                return null;
+            }
+            
+            return { reportPath, parameters, format };
+        }
+        
+        function viewReport() {
+            const data = getFormData();
+            if (!data) return;
+            
+            // Open SSRS report directly (not through proxy)
+            const ssrsBaseUrl = document.querySelector('.info-box span').textContent.trim();
+            let url = ssrsBaseUrl + data.reportPath;
+            
+            if (data.parameters) {
+                url += '?' + data.parameters;
+            }
+            
+            window.open(url, '_blank');
+        }
+        
+        function downloadReport() {
+            const data = getFormData();
+            if (!data) return;
+            
+            let url = '/reports/render?reportPath=' + encodeURIComponent(data.reportPath);
+            url += '&format=' + data.format;
+            if (data.parameters) {
+                url += '&' + data.parameters;
+            }
+            
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>
