@@ -76,7 +76,7 @@ public class BookingService {
         
         Resource resource = resourceRepository.findById(request.getResourceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
-        
+        log.info("before vallidating...");        
         // Validate booking
         validateBooking(user, resource, request);
         
@@ -103,9 +103,9 @@ public class BookingService {
         try {
             emailService.sendBookingConfirmation(savedBooking);
         } catch (Exception e) {
+        	System.out.println(e.getMessage());
             log.error("Failed to send booking confirmation email", e);
         }
-        
         return mapToBookingResponse(savedBooking);
     }
     
@@ -113,10 +113,12 @@ public class BookingService {
      * Validate booking request
      */
     private void validateBooking(User user, Resource resource, BookingRequest request) {
+    	log.info("entering into validate booking method...");
         log.debug("Validating booking for user: {} and resource: {}", user.getId(), resource.getId());
         
         // 1. Check resource status
         if (resource.getStatus() != ResourceStatus.AVAILABLE) {
+            log.error("Resource is not available for booking");
             throw new ValidationException("Resource is not available for booking");
         }
         
@@ -128,6 +130,7 @@ public class BookingService {
             if (resource.getMaintenanceStart() != null && resource.getMaintenanceEnd() != null) {
                 if (bookingStart.isBefore(resource.getMaintenanceEnd()) && 
                     bookingEnd.isAfter(resource.getMaintenanceStart())) {
+                	log.error("Resource is under maintenance during selected time");
                     throw new ValidationException("Resource is under maintenance during selected time");
                 }
             }
@@ -139,6 +142,7 @@ public class BookingService {
         
         int maxBookings = getMaxBookingsByRole(user.getRole());
         if (activeBookingsCount >= maxBookings) {
+        	log.error("maximum active booking limit reached");
             throw new ValidationException("Maximum active bookings limit reached (" + maxBookings + ")");
         }
         
@@ -146,11 +150,13 @@ public class BookingService {
         int advanceDays = getAdvanceBookingDays(user.getRole());
         LocalDate maxAdvanceDate = LocalDate.now().plusDays(advanceDays);
         if (request.getBookingDate().isAfter(maxAdvanceDate)) {
+        	log.error("cannot book more than advance days..");
             throw new ValidationException("Cannot book more than " + advanceDays + " days in advance");
         }
         
         // 5. Check booking date is not in the past
         if (request.getBookingDate().isBefore(LocalDate.now())) {
+        	log.error("cannot book for past dates....");
             throw new ValidationException("Cannot book for past dates");
         }
         
@@ -159,12 +165,14 @@ public class BookingService {
         int durationMinutes = (int) duration.toMinutes();
         
         if (durationMinutes < resource.getMinBookingDuration()) {
+        	log.error("booking duration must be at least..");
             throw new ValidationException("Booking duration must be at least " + 
                     resource.getMinBookingDuration() + " minutes");
         }
         
         int maxDuration = getMaxBookingDuration(user.getRole(), resource);
         if (durationMinutes > maxDuration) {
+        	log.error("booking duration cannot exceed");
             throw new ValidationException("Booking duration cannot exceed " + 
                     (maxDuration / 60) + " hours");
         }
@@ -178,11 +186,13 @@ public class BookingService {
         );
         
         if (!conflicts.isEmpty()) {
+        	log.error("selected time slot is already booked..");
             throw new BookingConflictException("Selected time slot is already booked");
         }
         
         // 8. Check attendees count
         if (request.getAttendeesCount() != null && request.getAttendeesCount() > resource.getCapacity()) {
+        	log.error("attendees count exceeds resource capacity..");
             throw new ValidationException("Attendees count (" + request.getAttendeesCount() + 
                     ") exceeds resource capacity (" + resource.getCapacity() + ")");
         }
@@ -190,12 +200,14 @@ public class BookingService {
         // 9. Check business hours (8 AM - 8 PM weekdays)
         if (request.getStartTime().isBefore(LocalTime.of(8, 0)) || 
             request.getEndTime().isAfter(LocalTime.of(20, 0))) {
+        	log.error("booking must be between 8 to 8");
             throw new ValidationException("Bookings must be between 8:00 AM and 8:00 PM");
         }
         
         // 10. Check if it's a weekend (Sunday closed)
         DayOfWeek dayOfWeek = request.getBookingDate().getDayOfWeek();
         if (dayOfWeek == DayOfWeek.SUNDAY) {
+        	log.error("booking not allowed on sundays..");
             throw new ValidationException("Bookings not allowed on Sundays");
         }
         

@@ -1,13 +1,20 @@
 package com.crm.smart_CRM.dto.request;
 
 
-import jakarta.validation.constraints.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Data
 @NoArgsConstructor
@@ -24,10 +31,19 @@ public class BookingRequest {
     @FutureOrPresent(message = "Booking date must be today or in the future")
     private LocalDate bookingDate;
     
-    @NotNull(message = "Start time is required")
-    private LocalTime startTime;
+//    @NotNull(message = "Start time is required")
+//    private LocalTime startTime;
     
-    @NotNull(message = "End time is required")
+    @JsonFormat(pattern = "HH:mm")
+    @Schema(type = "string", example = "10:30")
+    private LocalTime startTime;
+
+    
+//    @NotNull(message = "End time is required")
+//    private LocalTime endTime;
+    
+    @JsonFormat(pattern = "HH:mm")
+    @Schema(type = "string", example = "11:30")
     private LocalTime endTime;
     
     @NotBlank(message = "Purpose is required")

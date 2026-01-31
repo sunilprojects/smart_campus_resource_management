@@ -44,13 +44,14 @@ public class BookingController {
      * Create a new booking
      * POST /api/bookings
      */
-    @PostMapping
+    @PostMapping("/ss")
     public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
             @Valid @RequestBody BookingRequest request) {
-        
+        System.out.println("create booking is starting....");
         log.info("Create booking request received for user: {} and resource: {}", 
                 request.getUserId(), request.getResourceId());
-        
+        System.out.println("create booking is starting....");
+
         BookingResponse booking = bookingService.createBooking(request);
         
         return ResponseEntity

@@ -3,6 +3,8 @@ package com.crm.smart_CRM.dto.request;
 
 import com.crm.smart_CRM.Enum.UserRole;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -37,5 +39,6 @@ public class UserRegistrationRequest {
     @Size(max = 100, message = "Department must not exceed 100 characters")
     private String department;
     
-    private UserRole role = UserRole.STUDENT;
+    @Enumerated(EnumType.STRING)
+    private UserRole role ;
 }
